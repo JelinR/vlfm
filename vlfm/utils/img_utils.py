@@ -5,7 +5,7 @@ from typing import List, Tuple, Union
 import cv2
 import numpy as np
 
-
+#Rotates an image counter-clockwise
 def rotate_image(
     image: np.ndarray,
     radians: float,
@@ -41,16 +41,23 @@ def place_img_in_img(img1: np.ndarray, img2: np.ndarray, row: int, col: int) -> 
         numpy.ndarray: The updated base image with img2 placed.
     """
     assert 0 <= row < img1.shape[0] and 0 <= col < img1.shape[1], "Pixel location is outside the image."
+
+    #Remember that we are dealing with numpy arrays, and so the coord system is (x positive right, y positive down)
+    #Row corresponds to going along the y axis (down), and col corresponds to going along the x axis (right)
+    #We get the corners' locations using (row, col) and img2 shape, that is, we get the area where we need to place the img2 on img1
     top = row - img2.shape[0] // 2
     left = col - img2.shape[1] // 2
     bottom = top + img2.shape[0]
     right = left + img2.shape[1]
 
+    #Gets the area in img1 to be edited, where img2 needs to added onto
+    #Curbs the calculated corners within img1's corners
     img1_top = max(0, top)
     img1_left = max(0, left)
     img1_bottom = min(img1.shape[0], bottom)
     img1_right = min(img1.shape[1], right)
 
+    #Crops img2 to make it fit within img1's selected area
     img2_top = max(0, -top)
     img2_left = max(0, -left)
     img2_bottom = img2_top + (img1_bottom - img1_top)
