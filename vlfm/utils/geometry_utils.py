@@ -24,10 +24,14 @@ def rho_theta(curr_pos: np.ndarray, curr_heading: float, curr_goal: np.ndarray) 
         Tuple[float, float]: A tuple of floats representing the polar coordinates
             (rho, theta).
     """
+
+    #Here, curr_heading changes from local to global system,
+    # And thus, negative of that takes one from global to local system
     rotation_matrix = get_rotation_matrix(-curr_heading, ndims=2)
     local_goal = curr_goal - curr_pos
     local_goal = rotation_matrix @ local_goal
-
+    
+    #rho and theta are relative to the current local system
     rho = np.linalg.norm(local_goal)
     theta = np.arctan2(local_goal[1], local_goal[0])
 
@@ -79,11 +83,17 @@ def calculate_vfov(hfov: float, width: int, height: int) -> float:
     Returns:
         A float representing the VFOV in radians.
     """
-    # Calculate the diagonal field of view (DFOV)
-    dfov = 2 * math.atan(math.tan(hfov / 2) * math.sqrt((width**2 + height**2) / (width**2 + height**2)))
+    # # Calculate the diagonal field of view (DFOV)
+    # dfov = 2 * math.atan(math.tan(hfov / 2) * math.sqrt((width**2 + height**2) / (width**2 + height**2)))
 
-    # Calculate the vertical field of view (VFOV)
-    vfov = 2 * math.atan(math.tan(dfov / 2) * (height / math.sqrt(width**2 + height**2)))
+    # # Calculate the vertical field of view (VFOV)
+    # vfov = 2 * math.atan(math.tan(dfov / 2) * (height / math.sqrt(width**2 + height**2)))
+
+
+    #TODO: Changed vfov
+    # The above calculation is mathematically wrong, specifically the dfov calculation.  Check notes.
+    # The correct and simpler way to calculate vfov is as below:
+    vfov = 2 * math.atan(math.tan(hfov / 2) * (height / width))
 
     return vfov
 
@@ -107,11 +117,17 @@ def within_fov_cone(
     Returns:
         np.ndarray: The subarray of points that are within the cone.
     """
+
+    #Gets the distances from the cone_origin to each of the points
     directions = points[:, :3] - cone_origin
     dists = np.linalg.norm(directions, axis=1)
+
+    #Gets the angles btw cone's principal axis and each of the points
+    #The angles are wrapped to lie in between -pi and pi
     angles = np.arctan2(directions[:, 1], directions[:, 0])
     angle_diffs = np.mod(angles - cone_angle + np.pi, 2 * np.pi) - np.pi
 
+    #Gets points with distance within cone_range and wrapped angle within cone_fov/2 (horizontal fov / 2, since we are dealing with x and y coords)
     mask = np.logical_and(dists <= cone_range, np.abs(angle_diffs) <= cone_fov / 2)
     return points[mask]
 
@@ -227,10 +243,20 @@ def get_point_cloud(depth_image: np.ndarray, mask: np.ndarray, fx: float, fy: fl
     Returns:
         np.ndarray: Array of 3D coordinates (x, y, z) of the points in the image plane.
     """
+
+    # Get relevant z points: relevance is given my the mask array
+    # Here, since we are dealing with numpy arrays, the coordinate system is x positive rightwards and y positive downwards, with y first and x second
+    # The coord system here is as follows: (x positive right, y positive down, z positive into)
+    # So, here, v corresponds to y points and u corresponds to x points
     v, u = np.where(mask)
     z = depth_image[v, u]
+
+    # Scale x, y from 2D to 3D coords
     x = (u - depth_image.shape[1] // 2) * z / fx
     y = (v - depth_image.shape[0] // 2) * z / fy
+
+    # Changes the coordinate system convention
+    # New system: (x positive into, y positive left, z positive up)
     cloud = np.stack((z, -x, -y), axis=-1)
 
     return cloud
