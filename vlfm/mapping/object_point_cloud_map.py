@@ -59,6 +59,7 @@ class ObjectPointCloudMap:
             # assigned with a random number so that they can be identified later.
             within_range = within_range.astype(np.float32)
             within_range[within_range == 0] = np.random.rand()
+            
         global_cloud = transform_points(tf_camera_to_episodic, local_cloud)
         global_cloud = np.concatenate((global_cloud, within_range[:, None]), axis=1)
 

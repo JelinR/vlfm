@@ -42,6 +42,8 @@ class BaseMap:
             The array of (x, y) pixel coordinates.
         """
         px = np.rint(points[:, ::-1] * self.pixels_per_meter) + self._episode_pixel_origin
+        
+        #Flips y axis
         px[:, 0] = self._map.shape[0] - px[:, 0]
         return px.astype(int)
 

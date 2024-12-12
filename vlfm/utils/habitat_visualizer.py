@@ -219,6 +219,7 @@ def sim_xy_to_grid_xy(
     )
     grid_xy = ((sim_xy - lower_bound[::-1]) / grid_size).astype(int)
 
+    #Removes duplicate rows
     if remove_duplicates:
         grid_xy = np.unique(grid_xy, axis=0)
 

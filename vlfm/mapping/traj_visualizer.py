@@ -107,8 +107,13 @@ class TrajectoryVisualizer:
 
     def _metric_to_pixel(self, pt: np.ndarray) -> np.ndarray:
         """Converts a metric coordinate to a pixel coordinate"""
+
+        #TODO: Changed y-flip
+        #Why flip both x and y axes?  Aren't we supposed to flip only the y axis?
+        px =  pt * self._pixels_per_meter * np.array([1, -1]) + self._origin_in_img
+        
         # Need to flip y-axis because pixel coordinates start from top left
-        px = pt * self._pixels_per_meter * np.array([-1, -1]) + self._origin_in_img
+        #px = pt * self._pixels_per_meter * np.array([-1, -1]) + self._origin_in_img
         # px = pt * self._pixels_per_meter + self._origin_in_img
         px = px.astype(np.int32)
         return px

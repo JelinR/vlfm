@@ -4,6 +4,9 @@ from typing import Any, Union
 
 import cv2
 import numpy as np
+
+#TODO: Where to get these from?
+# These involve getting frontiers and updating explored areas
 from frontier_exploration.frontier_detection import detect_frontier_waypoints
 from frontier_exploration.utils.fog_of_war import reveal_fog_of_war
 
@@ -88,8 +91,12 @@ class ObstacleMap(BaseMap):
                 filled_depth = depth.copy()
                 filled_depth[depth == 0] = 1.0
             else:
+                #TODO: Why do this?
                 filled_depth = fill_small_holes(depth, self._hole_area_thresh)
+
             scaled_depth = filled_depth * (max_depth - min_depth) + min_depth
+
+            #Mask is used to ignore max_depth pixels
             mask = scaled_depth < max_depth
             point_cloud_camera_frame = get_point_cloud(scaled_depth, mask, fx, fy)
             point_cloud_episodic_frame = transform_points(tf_camera_to_episodic, point_cloud_camera_frame)
