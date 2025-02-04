@@ -31,6 +31,7 @@ except Exception:
         pass
 
 
+
 class BaseObjectNavPolicy(BasePolicy):
     _target_object: str = ""
     _policy_info: Dict[str, Any] = {}
@@ -64,9 +65,11 @@ class BaseObjectNavPolicy(BasePolicy):
         self._object_detector = GroundingDINOClient(port=int(os.environ.get("GROUNDING_DINO_PORT", "12181")))
         self._coco_object_detector = YOLOv7Client(port=int(os.environ.get("YOLOV7_PORT", "12184")))
         self._mobile_sam = MobileSAMClient(port=int(os.environ.get("SAM_PORT", "12183")))
+
         self._use_vqa = use_vqa
         if use_vqa:
             self._vqa = BLIP2Client(port=int(os.environ.get("BLIP2_PORT", "12185")))
+
         self._pointnav_policy = WrappedPointNavResNetPolicy(pointnav_policy_path)
         self._object_map: ObjectPointCloudMap = ObjectPointCloudMap(erosion_size=object_map_erosion_size)
         self._depth_image_shape = tuple(depth_image_shape)
@@ -154,6 +157,7 @@ class BaseObjectNavPolicy(BasePolicy):
         if not self._did_reset and masks[0] == 0:
             self._reset()
             self._target_object = observations["objectgoal"]
+        
         try:
             self._cache_observations(observations)
         except IndexError as e:
@@ -258,6 +262,7 @@ class BaseObjectNavPolicy(BasePolicy):
                 self._pointnav_policy.reset()
                 masks = torch.zeros_like(masks)
             self._last_goal = goal
+        
         robot_xy = self._observations_cache["robot_xy"]
         heading = self._observations_cache["robot_heading"]
         rho, theta = rho_theta(robot_xy, heading, goal)
@@ -308,7 +313,21 @@ class BaseObjectNavPolicy(BasePolicy):
         Returns:
             ObjectDetections: The object detections from the object detector.
         """
-        detections = self._get_object_detections(rgb)
+        #detections = self._get_object_detections(rgb)
+
+        #TODO: Changed
+        print('here')
+        from vlfm.vlm.detections import ObjectDetections
+        import torch
+
+        detections = ObjectDetections(
+            image_source = rgb,
+            boxes = torch.tensor([]),
+            logits = torch.tensor([]),
+            phrases = [],
+            fmt='xyxy'
+        )
+        
         height, width = rgb.shape[:2]
         self._object_masks = np.zeros((height, width), dtype=np.uint8)
         if np.array_equal(depth, np.ones_like(depth)) and detections.num_detections > 0:

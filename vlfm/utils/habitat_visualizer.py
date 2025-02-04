@@ -49,6 +49,7 @@ class HabitatVis:
     ) -> None:
         assert len(infos) == 1, "Only support one environment for now"
 
+        #Obtain depth observation
         if "annotated_depth" in policy_info[0]:
             depth = policy_info[0]["annotated_depth"]
             self.using_annotated_depth = True
@@ -58,6 +59,7 @@ class HabitatVis:
         depth = overlay_frame(depth, infos[0])
         self.depth.append(depth)
 
+        #Obtain RGB Observation
         if "annotated_rgb" in policy_info[0]:
             rgb = policy_info[0]["annotated_rgb"]
             self.using_annotated_rgb = True
@@ -68,8 +70,10 @@ class HabitatVis:
         # Visualize target point cloud on the map
         color_point_cloud_on_map(infos, policy_info)
 
+        #Get Top Down Map for the Habitat Scene
         map = maps.colorize_draw_agent_and_fit_to_height(infos[0]["top_down_map"], self.depth[0].shape[0])
         self.maps.append(map)
+        
         vis_map_imgs = [
             self._reorient_rescale_habitat_map(infos, policy_info[0][vkey])
             for vkey in ["obstacle_map", "value_map"]

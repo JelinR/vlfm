@@ -96,9 +96,12 @@ class VLFMTrainer(PPOTrainer):
         if config.habitat_baselines.verbose:
             logger.info(f"env config: {OmegaConf.to_yaml(config)}")
 
+
         self._init_envs(config, is_eval=True)
 
-        self._agent = self._create_agent(None)
+        #TODO: Checkpoint - habitat_baselines -> rl -> ppo -> single_agent_access_mgr.py
+        #TODO: Checkpoint - habitat_baselines -> rl -> multi-agent -> pop_play_wrappers.py
+        self._agent = self._create_agent(None) 
         action_shape, discrete_actions = get_action_space_info(self._agent.policy_action_space)
 
         if self._agent.actor_critic.should_load_agent_state:
@@ -154,7 +157,7 @@ class VLFMTrainer(PPOTrainer):
         assert number_of_eval_episodes > 0, "You must specify a number of evaluation episodes with test_episode_count"
 
         pbar = tqdm.tqdm(total=number_of_eval_episodes * evals_per_ep)
-        self._agent.eval()
+        self._agent.eval()  #What does this do?
 
         from vlfm.utils.habitat_visualizer import HabitatVis
 
@@ -165,7 +168,7 @@ class VLFMTrainer(PPOTrainer):
             current_episodes_info = self.envs.current_episodes()
 
             with inference_mode():
-                action_data = self._agent.actor_critic.act(
+                action_data = self._agent.actor_critic.act(     #The output action_data should contain the policy_info
                     batch,
                     test_recurrent_hidden_states,
                     prev_actions,

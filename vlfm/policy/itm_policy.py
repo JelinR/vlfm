@@ -23,6 +23,7 @@ except Exception:
 PROMPT_SEPARATOR = "|"
 
 
+
 class BaseITMPolicy(BaseObjectNavPolicy):
     _target_object_color: Tuple[int, int, int] = (0, 255, 0)
     _selected__frontier_color: Tuple[int, int, int] = (0, 255, 255)

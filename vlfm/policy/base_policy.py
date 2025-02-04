@@ -10,6 +10,7 @@ from habitat_baselines.rl.ppo import Policy
 from habitat_baselines.rl.ppo.policy import PolicyActionData
 
 
+
 @baseline_registry.register_policy
 class BasePolicy(Policy):
     """The bare minimum needed to load a policy for evaluation using ppo_trainer.py"""
