@@ -5,7 +5,6 @@ from typing import Any, Union
 import cv2
 import numpy as np
 
-#TODO: Where to get these from?
 # These involve getting frontiers and updating explored areas
 from frontier_exploration.frontier_detection import detect_frontier_waypoints
 from frontier_exploration.utils.fog_of_war import reveal_fog_of_war
@@ -36,9 +35,9 @@ class ObstacleMap(BaseMap):
         pixels_per_meter: int = 20,
     ):
         super().__init__(size, pixels_per_meter)
-        self.explored_area = np.zeros((size, size), dtype=bool)
-        self._map = np.zeros((size, size), dtype=bool)
-        self._navigable_map = np.zeros((size, size), dtype=bool)
+        self.explored_area = np.zeros((size, size), dtype=bool)     #For Explored Areas
+        self._map = np.zeros((size, size), dtype=bool)              #For Obstacles
+        self._navigable_map = np.zeros((size, size), dtype=bool)    #For Navigable Spaces (Inverse of Obstacle map accounting also for the robot radius)
         self._min_height = min_height
         self._max_height = max_height
         self._area_thresh_in_pixels = area_thresh * (self.pixels_per_meter**2)

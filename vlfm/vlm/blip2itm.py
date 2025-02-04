@@ -67,6 +67,7 @@ class BLIP2ITMClient:
 if __name__ == "__main__":
     import argparse
 
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=12182)
     args = parser.parse_args()

@@ -53,6 +53,8 @@ class ObjectPointCloudMap:
         else:
             # Mark all points of local_cloud whose distance from the camera is too far
             # as being out of range
+
+            #TODO: Shouldn't it be (max_depth - min_depth)?
             within_range = (local_cloud[:, 0] <= max_depth * 0.95) * 1.0  # 5% margin
             # All values of 1 in within_range will be considered within range, and all
             # values of 0 will be considered out of range; these 0s need to be

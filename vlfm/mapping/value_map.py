@@ -51,7 +51,7 @@ class ValueMap(BaseMap):
     ) -> None:
         """
         Args:
-            value_channels: The number of channels in the value map.
+            value_channels: The number of channels in the value map.    #TODO: What does this correspond to?  Is it the two channels for semantic scores and confidence scores?
             size: The size of the value map in pixels.
             use_max_confidence: Whether to use the maximum confidence value in the value
                 map or a weighted average confidence value.
@@ -198,6 +198,7 @@ class ValueMap(BaseMap):
         if obstacle_map is not None:
             reduced_map[obstacle_map.explored_area == 0] = 0
         map_img = np.flipud(reduced_map)
+        
         # Make all 0s in the value map equal to the max value, so they don't throw off
         # the color mapping (will revert later)
         zero_mask = map_img == 0
@@ -205,6 +206,7 @@ class ValueMap(BaseMap):
         map_img = monochannel_to_inferno_rgb(map_img)
         # Revert all values that were originally zero to white
         map_img[zero_mask] = (255, 255, 255)
+
         if len(self._camera_positions) > 0:
             self._traj_vis.draw_trajectory(
                 map_img,

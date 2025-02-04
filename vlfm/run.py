@@ -30,10 +30,10 @@ class HabitatConfigPlugin(SearchPathPlugin):
     def manipulate_search_path(self, search_path: ConfigSearchPath) -> None:
         search_path.append(provider="habitat", path="config/")
 
-
+#Registers habitat config dir path to the ConfigSearchPath globally
 register_hydra_plugin(HabitatConfigPlugin)
 
-
+#Loads the VLFM config dir locally in this script
 @hydra.main(
     version_base=None,
     config_path="../config",
@@ -52,6 +52,7 @@ def main(cfg: DictConfig) -> None:
             cfg.habitat.simulator.agents.main_agent.sim_sensors.pop("semantic_sensor")
         except KeyError:
             pass
+
     execute_exp(cfg, "eval" if cfg.habitat_baselines.evaluate else "train")
 
 

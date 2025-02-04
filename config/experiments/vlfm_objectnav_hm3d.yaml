@@ -28,6 +28,7 @@ habitat:
       base_explorer:
         turn_angle: 30
 
+
 habitat_baselines:
   evaluate: True
   eval_ckpt_path_dir: data/dummy_policy.pth
@@ -39,7 +40,7 @@ habitat_baselines:
   video_dir: "video_dir"
   test_episode_count: -1
   checkpoint_folder: "data/new_checkpoints"
-  trainer_name: "vlfm"
+  trainer_name: "vlfm"                        #Check out: vlfm -> utils -> vlfm_trainer
   num_updates: 270000
   log_interval: 10
   num_checkpoints: 100
