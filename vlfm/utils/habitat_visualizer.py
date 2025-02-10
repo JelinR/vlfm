@@ -82,6 +82,7 @@ class HabitatVis:
         if vis_map_imgs:
             self.using_vis_maps = True
             self.vis_maps.append(vis_map_imgs)
+        
         text = [
             policy_info[0][text_key]
             for text_key in policy_info[0].get("render_below_images", [])

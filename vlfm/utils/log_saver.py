@@ -5,7 +5,6 @@ import os
 import time
 from typing import Dict, Union
 
-
 def log_episode(episode_id: Union[str, int], scene_id: str, data: Dict) -> None:
     log_dir = os.environ["ZSOS_LOG_DIR"]
     try:

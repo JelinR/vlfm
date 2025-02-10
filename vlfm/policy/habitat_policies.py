@@ -94,6 +94,9 @@ class HabitatMixin:
     @classmethod
     def from_config(cls, config: DictConfig, *args_unused: Any, **kwargs_unused: Any) -> "HabitatMixin":
         policy_config: VLFMPolicyConfig = config.habitat_baselines.rl.policy
+        
+        #Loads all the relevant configs (inside VLFMPolicyConfig)
+        #VLFMPolicyConfig is defined in base_objectnav_policy.py
         kwargs = {k: policy_config[k] for k in VLFMPolicyConfig.kwaarg_names}  # type: ignore
 
         # In habitat, we need the height of the camera to generate the camera transform

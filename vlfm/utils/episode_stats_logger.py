@@ -11,7 +11,7 @@ from vlfm.utils.geometry_utils import transform_points
 from vlfm.utils.habitat_visualizer import sim_xy_to_grid_xy
 from vlfm.utils.log_saver import log_episode
 
-
+#Logs infos as JSON after removing all numpy arrays within the infos dictionary
 def log_episode_stats(episode_id: int, scene_id: str, infos: Dict) -> str:
     """Log episode stats to the console.
 

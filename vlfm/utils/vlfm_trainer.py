@@ -100,7 +100,7 @@ class VLFMTrainer(PPOTrainer):
         self._init_envs(config, is_eval=True)
 
         #TODO: Checkpoint - habitat_baselines -> rl -> ppo -> single_agent_access_mgr.py
-        #TODO: Checkpoint - habitat_baselines -> rl -> multi-agent -> pop_play_wrappers.py
+        #TODO: Imp -> Initializes the policy (the configs are loaded using the from_config method inside HabitatMixin)
         self._agent = self._create_agent(None) 
         action_shape, discrete_actions = get_action_space_info(self._agent.policy_action_space)
 
@@ -157,17 +157,20 @@ class VLFMTrainer(PPOTrainer):
         assert number_of_eval_episodes > 0, "You must specify a number of evaluation episodes with test_episode_count"
 
         pbar = tqdm.tqdm(total=number_of_eval_episodes * evals_per_ep)
-        self._agent.eval()  #What does this do?
+        self._agent.eval()
 
         from vlfm.utils.habitat_visualizer import HabitatVis
 
         num_successes = 0
         num_total = 0
-        hab_vis = HabitatVis()
+        hab_vis = HabitatVis()      #TODO: Imp -> Visualization
+
         while len(stats_episodes) < (number_of_eval_episodes * evals_per_ep) and self.envs.num_envs > 0:
             current_episodes_info = self.envs.current_episodes()
 
             with inference_mode():
+
+                #TODO: Imp -> Policy Action (See Habitat, ITM, ObjectNav, Base Policies)
                 action_data = self._agent.actor_critic.act(     #The output action_data should contain the policy_info
                     batch,
                     test_recurrent_hidden_states,
@@ -211,12 +214,14 @@ class VLFMTrainer(PPOTrainer):
             else:
                 step_data = [a.item() for a in action_data.env_actions.cpu()]
 
+            #TODO: Imp -> Takes step in env, updates infos using the new policy_infos
             outputs = self.envs.step(step_data)
 
             observations, rewards_l, dones, infos = [list(x) for x in zip(*outputs)]
             policy_infos = self._agent.actor_critic.get_extra(action_data, infos, dones)
             for i in range(len(policy_infos)):
-                infos[i].update(policy_infos[i])
+                infos[i].update(policy_infos[i])    #Updates all info keys present in policy_info keys
+            
             batch = batch_obs(  # type: ignore
                 observations,
                 device=self.device,
@@ -248,6 +253,8 @@ class VLFMTrainer(PPOTrainer):
                 elif int(next_episodes_info[i].episode_id) == 123123123:
                     envs_to_pause.append(i)
 
+
+                #TODO: Imp -> Collects data for visualization
                 if len(self.config.habitat_baselines.eval.video_option) > 0:
                     hab_vis.collect_data(batch, infos, action_data.policy_info)
 
@@ -274,6 +281,7 @@ class VLFMTrainer(PPOTrainer):
                         log_episode_stats,
                     )
 
+                    #TODO: Imp -> Logs Infos as JSON after removing all np arrays from values
                     try:
                         failure_cause = log_episode_stats(
                             current_episodes_info[i].episode_id,
@@ -283,6 +291,8 @@ class VLFMTrainer(PPOTrainer):
                     except Exception:
                         failure_cause = "Unknown"
 
+
+                    #TODO: Imp -> Saves all the visualized frames into a video
                     if len(self.config.habitat_baselines.eval.video_option) > 0:
                         rgb_frames[i] = hab_vis.flush_frames(failure_cause)
                         generate_video(
