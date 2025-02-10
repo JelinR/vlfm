@@ -12,6 +12,7 @@ from frontier_exploration.utils.fog_of_war import reveal_fog_of_war
 from vlfm.mapping.base_map import BaseMap
 from vlfm.utils.geometry_utils import extract_yaw, get_point_cloud, transform_points
 from vlfm.utils.img_utils import fill_small_holes
+import vlfm.utils.embed_utils as eu
 
 
 class ObstacleMap(BaseMap):
@@ -46,6 +47,9 @@ class ObstacleMap(BaseMap):
         # round kernel_size to nearest odd number
         kernel_size = int(kernel_size) + (int(kernel_size) % 2 == 0)
         self._navigable_kernel = np.ones((kernel_size, kernel_size), np.uint8)
+
+        #TODO: Changed
+        self._embed_map = np.zeros((size, size), dtype = bool)
 
     def reset(self) -> None:
         super().reset()
@@ -85,12 +89,15 @@ class ObstacleMap(BaseMap):
             explore (bool): Whether to update the explored area.
             update_obstacles (bool): Whether to update the obstacle map.
         """
+        #TODO: Changed
+        self._embed_map.fill_(0)
+
+
         if update_obstacles:
             if self._hole_area_thresh == -1:
                 filled_depth = depth.copy()
                 filled_depth[depth == 0] = 1.0
             else:
-                #TODO: Why do this?
                 filled_depth = fill_small_holes(depth, self._hole_area_thresh)
 
             scaled_depth = filled_depth * (max_depth - min_depth) + min_depth
@@ -101,10 +108,55 @@ class ObstacleMap(BaseMap):
             point_cloud_episodic_frame = transform_points(tf_camera_to_episodic, point_cloud_camera_frame)
             obstacle_cloud = filter_points_by_height(point_cloud_episodic_frame, self._min_height, self._max_height)
 
+
+            #################
+            #TODO: Changed
+
+            #For SED compatibility, rescale depth to nearest divisible dimensions 
+            # using bilinear interpolation
+            scaled_depth_inter = depth * (max_depth - min_depth) + min_depth
+            depth_inter = eu.interpolate_depth(scaled_depth_inter, self.size_div)
+
+            #2D binary array of corner points of each patch in the image
+            #size_div is the number of patches along the x and y dimensions
+            patch_img_corners = eu.get_patch_img_corners(depth_inter, self.size_div)
+
+            #Point cloud for patch corners
+            patch_cloud_camera_frame = get_point_cloud(depth_inter, patch_img_corners, fx, fy)
+            patch_cloud_episodic_frame = transform_points(tf_camera_to_episodic, patch_cloud_camera_frame)
+
+            #Dictionary mapping Patch to ( corners' pixel locations, flat corner indices )
+            patch_to_corners = eu.map_patch_to_corners(cloud_pts = patch_cloud_episodic_frame,
+                                                        n_patch_dims = self.size_div,
+                                                        px_per_meter = self.pixels_per_meter,
+                                                        px_center = self._episode_pixel_origin,
+                                                        map_lims = self._map.shape)
+            
+            self.valid_patch_to_corners = patch_to_corners
+
+
+            # #Mask for height filter, checks if a corner point is within the valid height range
+            # filter_height_mask_patch = (patch_cloud_episodic_frame[:, 2] >= self.patch_min_height) & (patch_cloud_episodic_frame[:, 2] <= self.patch_max_height)
+            
+            # #Filter out invalid patch corners that lie outside the filter range
+            # self.valid_patch_to_corners = {k:v for (k, v) in patch_to_corners.items() if sum(filter_height_mask_patch[v[1]]) >= self.valid_corner_thresh}
+
+            #####################
+
+
             # Populate topdown map with obstacle locations
             xy_points = obstacle_cloud[:, :2]
             pixel_points = self._xy_to_px(xy_points)
             self._map[pixel_points[:, 1], pixel_points[:, 0]] = 1
+
+            #TODO: Changed for vlfm_embed
+            # For the Embedding map, we consider all the points visible in the frame, not just the obstacles
+            # This helps cover obstacles that are blocking the view or too tall to obtain the top points 
+            # (the ceiling helps in covering these objects)
+            xy_points_all = point_cloud_episodic_frame[:, :2]
+            pixel_points_all = self._xy_to_px_t(xy_points_all).long()
+            self._embed_map[pixel_points_all[:, 1], pixel_points_all[:, 0]] = 1
+
 
             # Update the navigable area, which is an inverse of the obstacle map after a
             # dilation operation to accommodate the robot's radius.
@@ -131,6 +183,11 @@ class ObstacleMap(BaseMap):
         new_explored_area = cv2.dilate(new_explored_area, np.ones((3, 3), np.uint8), iterations=1)
         self.explored_area[new_explored_area > 0] = 1
         self.explored_area[self._navigable_map == 0] = 0
+
+        #TODO: Changed for vlfm_embed
+        self._embed_map[new_explored_area > 0] = 1
+
+        
         contours, _ = cv2.findContours(
             self.explored_area.astype(np.uint8),
             cv2.RETR_EXTERNAL,
